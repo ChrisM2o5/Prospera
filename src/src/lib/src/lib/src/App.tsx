@@ -2,228 +2,141 @@ import { useState } from "react";
 import type { HouseholdData } from "../../../../../types";
 import { runSimulation } from "../../../simulation";
 import { defaultScenarios } from "../scenarios";
+import "./styles.css";
 
 const initialHousehold: HouseholdData = {
-income: 54000,
-incomeVariability: 0,
-
-expenses: {
-housing: 1000,
-utilities: 250,
-food: 700,
-transportation: 500,
-healthcare: 200,
-debt: 500,
-essentials: 300,
-},
-
-savings: 1000,
-debtBalance: 10000,
-debtInterestRate: 8,
+  income: 54000,
+  incomeVariability: 0,
+  expenses: {
+    housing: 1000,
+    utilities: 250,
+    food: 700,
+    transportation: 500,
+    healthcare: 200,
+    debt: 500,
+    essentials: 300,
+  },
+  savings: 1000,
+  debtBalance: 10000,
+  debtInterestRate: 8,
 };
 
 function App() {
-const [household, setHousehold] =
-useState<HouseholdData>(initialHousehold);
+  const [household, setHousehold] = useState<HouseholdData>(initialHousehold);
+  const [selectedScenario, setSelectedScenario] = useState(defaultScenarios[0]);
+  const results = runSimulation(household, selectedScenario, 60);
+  const finalResult = results[results.length - 1];
 
-const [selectedScenario, setSelectedScenario] =
-useState(defaultScenarios[0]);
+  const updateHousehold = (field: "income" | "savings" | "debtBalance", value: string) => {
+    setHousehold((current) => ({ ...current, [field]: Number(value) }));
+  };
 
-const results = runSimulation(
-household,
-selectedScenario,
-60
-);
+  return (
+    <main className="app-shell">
+      <header className="hero">
+        <div className="brand-mark">P</div>
+        <div>
+          <p className="eyebrow">Personal finance, made tangible</p>
+          <h1>Prospera</h1>
+          <p className="hero-copy">See how today&apos;s choices shape your financial horizon.</p>
+        </div>
+      </header>
 
-const finalResult = results[results.length - 1];
+      <section className="panel input-panel" aria-labelledby="household-heading">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Your starting point</p>
+            <h2 id="household-heading">Household snapshot</h2>
+          </div>
+          <span className="live-pill"><span />Live projection</span>
+        </div>
+        <div className="input-grid">
+          <label className="field">
+            <span>Annual income</span>
+            <input aria-label="Annual income" type="number" value={household.income} onChange={(event) => updateHousehold("income", event.target.value)} />
+          </label>
+          <label className="field">
+            <span>Current savings</span>
+            <input aria-label="Current savings" type="number" value={household.savings} onChange={(event) => updateHousehold("savings", event.target.value)} />
+          </label>
+          <label className="field">
+            <span>Total debt</span>
+            <input aria-label="Total debt" type="number" value={household.debtBalance} onChange={(event) => updateHousehold("debtBalance", event.target.value)} />
+          </label>
+        </div>
+      </section>
 
-const updateIncome = (value: string) => {
-setHousehold({
-...household,
-income: Number(value),
-});
-};
+      <section className="scenario-section" aria-labelledby="scenario-heading">
+        <div className="section-heading scenario-heading">
+          <div>
+            <p className="eyebrow">Explore possibilities</p>
+            <h2 id="scenario-heading">Choose a scenario</h2>
+          </div>
+          <p className="scenario-description">{selectedScenario.description}</p>
+        </div>
+        <div className="scenario-list">
+          {defaultScenarios.map((scenario) => (
+            <button
+              className={scenario.id === selectedScenario.id ? "scenario-button active" : "scenario-button"}
+              type="button"
+              key={scenario.id}
+              onClick={() => setSelectedScenario(scenario)}
+            >
+              <span className="scenario-dot" />
+              {scenario.name}
+            </button>
+          ))}
+        </div>
+      </section>
 
-const updateSavings = (value: string) => {
-setHousehold({
-...household,
-savings: Number(value),
-});
-};
+      <section className="metrics-grid" aria-label="Projection summary">
+        <div className="metric-card metric-card-primary">
+          <p className="metric-label">60-month savings</p>
+          <strong className="metric-value">${finalResult.savings.toFixed(0)}</strong>
+          <span className="metric-note">Cash reserve projected</span>
+        </div>
+        <div className="metric-card">
+          <p className="metric-label">Remaining debt</p>
+          <strong className="metric-value">${finalResult.debtBalance.toFixed(0)}</strong>
+          <span className="metric-note">After interest and payments</span>
+        </div>
+        <div className="metric-card">
+          <p className="metric-label">Projected net worth</p>
+          <strong className="metric-value">${finalResult.netWorth.toFixed(0)}</strong>
+          <span className="metric-note">Savings less remaining debt</span>
+        </div>
+      </section>
 
-const updateDebt = (value: string) => {
-setHousehold({
-...household,
-debtBalance: Number(value),
-});
-};
-
-return (
-<main
-style={{
-maxWidth: "1100px",
-margin: "0 auto",
-padding: "40px 20px",
-fontFamily: "Arial, sans-serif",
-}}
->
-<header>
-<h1>Prospera</h1>
-<p>
-Financial planning through simulation.
-</p>
-</header>
-
-<section
-style={{
-display: "grid",
-gridTemplateColumns:
-"repeat(auto-fit, minmax(250px, 1fr))",
-gap: "20px",
-marginTop: "30px",
-}}
->
-<div>
-<label>Annual Income</label>
-<input
-type="number"
-value={household.income}
-onChange={(e) =>
-updateIncome(e.target.value)
-}
-/>
-</div>
-
-<div>
-<label>Current Savings</label>
-<input
-type="number"
-value={household.savings}
-onChange={(e) =>
-updateSavings(e.target.value)
-}
-/>
-</div>
-
-<div>
-<label>Total Debt</label>
-<input
-type="number"
-value={household.debtBalance}
-onChange={(e) =>
-updateDebt(e.target.value)
-}
-/>
-</div>
-</section>
-
-<section style={{ marginTop: "40px" }}>
-<h2>Choose a Scenario</h2>
-
-<div
-style={{
-display: "flex",
-flexWrap: "wrap",
-gap: "10px",
-}}
->
-{defaultScenarios.map((scenario) => (
-<button
-key={scenario.id}
-onClick={() =>
-setSelectedScenario(scenario)
-}
->
-{scenario.name}
-</button>
-))}
-</div>
-</section>
-
-<section
-style={{
-display: "grid",
-gridTemplateColumns:
-"repeat(auto-fit, minmax(200px, 1fr))",
-gap: "20px",
-marginTop: "40px",
-}}
->
-<div>
-<h3>60-Month Savings</h3>
-<strong>
-${finalResult.savings.toFixed(0)}
-</strong>
-</div>
-
-<div>
-<h3>Remaining Debt</h3>
-<strong>
-${finalResult.debtBalance.toFixed(0)}
-</strong>
-</div>
-
-<div>
-<h3>Projected Net Worth</h3>
-<strong>
-${finalResult.netWorth.toFixed(0)}
-</strong>
-</div>
-</section>
-
-<section style={{ marginTop: "40px" }}>
-<h2>60-Month Projection</h2>
-
-<div
-style={{
-maxHeight: "400px",
-overflowY: "auto",
-}}
->
-<table
-style={{
-width: "100%",
-borderCollapse: "collapse",
-}}
->
-<thead>
-<tr>
-<th>Month</th>
-<th>Income</th>
-<th>Expenses</th>
-<th>Debt</th>
-<th>Savings</th>
-<th>Net Worth</th>
-</tr>
-</thead>
-
-<tbody>
-{results.map((result) => (
-<tr key={result.month}>
-<td>{result.month}</td>
-<td>
-${result.income.toFixed(0)}
-</td>
-<td>
-${result.expenses.toFixed(0)}
-</td>
-<td>
-${result.debtBalance.toFixed(0)}
-</td>
-<td>
-${result.savings.toFixed(0)}
-</td>
-<td>
-${result.netWorth.toFixed(0)}
-</td>
-</tr>
-))}
-</tbody>
-</table>
-</div>
-</section>
-</main>
-);
+      <section className="projection-panel panel" aria-labelledby="projection-heading">
+        <div className="table-heading">
+          <div>
+            <p className="eyebrow">Month by month</p>
+            <h2 id="projection-heading">60-month projection</h2>
+          </div>
+          <span className="table-range">01 — 60</span>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Month</th><th>Income</th><th>Expenses</th><th>Debt</th><th>Savings</th><th>Net worth</th></tr>
+            </thead>
+            <tbody>
+              {results.map((result) => (
+                <tr key={result.month}>
+                  <td>{result.month}</td>
+                  <td>${result.income.toFixed(0)}</td>
+                  <td>${result.expenses.toFixed(0)}</td>
+                  <td>${result.debtBalance.toFixed(0)}</td>
+                  <td>${result.savings.toFixed(0)}</td>
+                  <td>${result.netWorth.toFixed(0)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  );
 }
 
 export default App;
